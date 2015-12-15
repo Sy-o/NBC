@@ -26,7 +26,7 @@ getMaybeData source splitter = getMaybeMatrix $ cutM $ getStringMatrix source sp
 
 cutM matrix = map (\v -> (init v, last v)) matrix
 
-getMaybeMatrix :: [([String], String)] -> Maybe [([a], String)] 
+getMaybeMatrix :: Read a => [([String], String)] -> Maybe [([a], String)] 
 getMaybeMatrix m = let 
   classes = map (snd) m
   objs = map (fst) m
@@ -34,9 +34,9 @@ getMaybeMatrix m = let
     in joinObjsAndClasses mayBeObjs classes
 
 joinObjsAndClasses :: Maybe [[a]] -> [String] -> Maybe [([a],String)]
-joinObjsAndClasses o c
-  | Nothing _ = Nothing
-  | (Just o) c = Just (zipWith (\oi ci -> (oi, ci)) o c)   
+joinObjsAndClasses o c = case o of 
+  Nothing -> Nothing
+  Just o -> Just (zipWith (\oi ci -> (oi, ci)) o c)   
 
 
 unpackMabeVector :: [Maybe a] -> Maybe [a]
