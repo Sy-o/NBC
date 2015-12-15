@@ -7,6 +7,7 @@ module CSVParse
 import System.IO.Error
 import Data.List.Split.Internals
 import Data.Maybe
+import Data.Char (isSpace)
 
 handlerForFileRoutine name e
   | isDoesNotExistError e = error ("File "++ name ++" does not exist") 
@@ -28,7 +29,7 @@ cutM matrix = map (\v -> (init v, last v)) matrix
 
 getMaybeMatrix :: Read a => [([String], String)] -> Maybe [([a], String)] 
 getMaybeMatrix m = let 
-  classes = map (snd) m
+  classes = map (trim) $ map (snd) m
   objs = map (fst) m
   mayBeObjs = unpackMabeMatrix $ map (map readMaybe) objs
     in joinObjsAndClasses mayBeObjs classes
@@ -47,5 +48,10 @@ unpackMabeVector v = mV [] v
 
 unpackMabeMatrix :: [[Maybe a]] -> Maybe [[a]]
 unpackMabeMatrix m = unpackMabeVector $ map unpackMabeVector m
+
+trim :: String -> String
+trim = f . f 
+  where f = reverse . dropWhile isSpace
+
 
   

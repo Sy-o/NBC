@@ -3,7 +3,8 @@ module NBC
   addClassFreq,
   normalizeClassesFreq,
   addObjectToClass,
-  normalizeClassesFeats
+  normalizeClassesFeats,
+  calcDispersion
 ) where
 
 import qualified Data.Map as Map
