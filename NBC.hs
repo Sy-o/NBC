@@ -5,7 +5,7 @@ module NBC
   addObjectToClass,
   normalizeClassesFeats,
   calcDispersion,
-  findMaxInMap
+  classify
 ) where
 
 import qualified Data.Map as Map
@@ -41,11 +41,14 @@ calcDispersion objs fMap = Map.mapWithKey (dispForClass) fMap
         disp x m = (/((fromIntegral $ length x)-1)) $ sum $ map (^2) $ map (\i -> i - m) x
 
 ------------------------------- Test part -------------------------------------------
---classify :: [[a]] -> Map.Map String a -> Map.Map String [(a,a)] -> [(String,a)]
---classify xs classesFreq classes = map classifyObj xs
---  where classifyObj x = map findMaxInMap $ probForAllClasses x
---    where probForAllClasses xi = Map.mapWithKey (probForClass) classes
---      where probForClass k val = (classesFreq k) * ( map (*) $ zipWith (featureProb) val xi )
---        where featureProb (m,q) v = exp(-((v - m)^2 / (2 * q^2))) / (sqrt 2*pi*q^2)   
+classify :: (Floating a, Ord a) => [[a]] -> Map.Map String a -> Map.Map String [(a,a)] -> [(String,a)]
+classify xs classesFreq classes = map (classifyObj) xs
+  where
+    classifyObj x = findMaxInMap $ Map.mapWithKey (probForClass) classes
+      where
+        probForClass k val = (classesFreq Map.! k) * ( product ( zipWith (featureProb) val x ))
+          where
+            featureProb (m,q) v = exp(-((v - m)^2 / (2 * q^2))) / (sqrt 2*pi*q^2)   
 
+findMaxInMap :: Ord a => Map.Map t a -> (t,a)
 findMaxInMap map' = maximumBy (\(k,v) (k1,v1) -> compare v v1) $ Map.toList map'
