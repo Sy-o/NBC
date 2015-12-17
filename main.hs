@@ -3,6 +3,7 @@ import Trash
 import FileRoutine
 import Print
 import Random
+import Args
 
 import Prelude hiding (catch) 
 import System.IO
@@ -11,7 +12,14 @@ import Control.Exception
 import System.Random as R
 import qualified Data.Map as Map
 import Control.Monad.Reader
+import System.Environment
+import System.Console.CmdArgs
 
+options = InputOptions{
+  splat = 0.7 &= help "break source data",
+  sourceFile = "source2.txt" &= help "file path for sorce data",
+  columnSplitter = "," &= help "column splitter in csv file"
+}
 
 getSeparatedData :: RandomGen g => Reader ([([a],String)], Double, g) ([([a],String)],[([a],String)], [Int], [Int])
 getSeparatedData = do
@@ -24,26 +32,23 @@ getSeparatedData = do
 
 main = do 
   newGen <- R.getStdGen
-  x <- getMaybeData "source2.txt" ","
+  args' <- cmdArgs options
+  x <- getMaybeData (sourceFile args') (columnSplitter args')
   let 
     objs = unpackMaybeData $ sequence x
-    
-    (trainObj, testObj, train, test) = runReader getSeparatedData (objs, 0.6, newGen)
+    splat_ = splat args'
+    (trainObj, testObj, train, test) = runReader getSeparatedData (objs, splat_, newGen)
 
     classesFreq = getClassesFreq trainObj
     featuresFreq = getFeaturesFreq trainObj
     classifyResult = classify (map (fst) testObj) classesFreq featuresFreq
+
     in do
+      writeResultToFile "output.txt" train $ Map.toList featuresFreq
       printClassifyError $ validate (map (snd) testObj) classifyResult
       putStrLn "\nResult of classification: "
       print classifyResult
       putStrLn "\nTest indexes:"
       print test
       putStrLn "------------------------------------------------"
-
-      writeResultToFile "output.txt" train $ Map.toList featuresFreq
-
-
-
-
-    
+  
