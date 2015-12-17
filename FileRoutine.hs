@@ -34,13 +34,10 @@ source path = do
                 yield c
                 readByLine handle
 
+ 
+
 conduitParser:: String -> Conduit String (ResourceT IO) (Maybe ([Double], String)) 
-conduitParser splitter = awaitForever $ yield . getObject . splitOn splitter 
-    where 
-        getObject a = maybeVector (mapM tryParse (init a), trim (last a))
-            where 
-                maybeVector (Just x, c) = Just (x, c)
-                maybeVector (Nothing, _) = Nothing
+conduitParser splitter = awaitForever $ yield . getObject splitter
 
 
 tryParse :: (Read a) => String -> Maybe a  
@@ -79,3 +76,13 @@ writeResultToFile path indexes result = withFile path WriteMode $ \h -> do
   hPrint h "Train indexes:"
   hPrint h $ intercalate ", " (map show indexes)
   
+
+
+----------------------------------------------------------------------------------------
+
+getObject splitter str = f (mapM tryParse (init listStrs), trim (last listStrs))
+  where
+    listStrs = splitOn splitter str  
+    f value = case value of
+      (Just x, c) -> Just (x,c)
+      (Nothing, _) -> Nothing
