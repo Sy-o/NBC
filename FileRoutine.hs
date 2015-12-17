@@ -3,7 +3,8 @@ module FileRoutine
   source,
   conduitParser,
   getMaybeData,
-  unpackMaybeData
+  unpackMaybeData,
+  writeResultToFile
 ) where
 
 import Control.Monad.Trans.Resource
@@ -12,7 +13,11 @@ import Control.Monad.IO.Class
 import System.IO
 import Data.List.Split.Internals
 import Data.Char (isSpace)
+import Data.List
 import qualified Data.Conduit.List as CL
+import qualified Data.Conduit.Binary as CB
+
+-----------------------------  Read input -------------------------------------
 
 source:: FilePath -> Source (ResourceT IO) String
 source path = do
@@ -35,7 +40,7 @@ conduitParser = awaitForever $ yield . getObject . splitOn ","
     where 
         getObject a = maybeVector (mapM tryParse (init a), trim (last a))
             where 
-                maybeVector (Just x, c) = Just (x,c)
+                maybeVector (Just x, c) = Just (x, c)
                 maybeVector (Nothing, _) = Nothing
 
 
@@ -54,3 +59,24 @@ unpackMaybeData d = case d of
     Nothing -> error "Wrong CSV File Format!"
     Just x -> x
 
+
+-----------------------------------  Write result ----------------------------------------
+
+conduitWriter:: Conduit (String,[(Double,Double)]) IO String 
+conduitWriter = awaitForever $ yield . convertToNiceStr
+  where 
+    convertToNiceStr (k,v)= "class " ++ k ++ " : \n " ++ show' v ++ "\n\n"
+      where
+        show' x = intercalate " - " $ map (\(m,q) -> "(" ++ show m ++ "; " ++ show q ++ ")") x
+
+fileSink :: Handle -> Sink String IO ()
+fileSink handle = CL.mapM_ (hPutStrLn handle)
+
+
+writeResult handle result = CL.sourceList result $= conduitWriter $$ fileSink handle
+
+writeResultToFile path indexes result = withFile path WriteMode $ \h -> do 
+  writeResult h result
+  hPrint h "Train indexes:"
+  hPrint h $ intercalate ", " (map show indexes)
+  
