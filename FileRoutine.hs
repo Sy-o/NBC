@@ -48,7 +48,7 @@ trim :: String -> String
 trim = f . f 
   where f = reverse . dropWhile isSpace
 
-getMaybeData path = runResourceT $ (source "source1.txt") $= conduitParser $$ CL.consume
+getMaybeData path = runResourceT $ (source path) $= conduitParser $$ CL.consume
 
 unpackMaybeData d = case d of 
     Nothing -> error "Wrong CSV File Format!"
