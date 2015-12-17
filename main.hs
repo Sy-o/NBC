@@ -1,29 +1,22 @@
 import NBC
-import CSVParse
 import Trash
+import FileRoutine
+import Print
 
 import Prelude hiding (catch) 
 import System.IO
 import System.IO.Error hiding(try, catch, ioError)
 import Control.Exception
 
-import qualified Data.Map as Map 
-
-printResult featFreq = mapM_ (\(k,v) -> print ("class " ++ k ++ " : " ++ (show v))) $ Map.toList featFreq
-
-printMatrix m = mapM_ print m 
-
-getData sourceData s = sCSV (getMaybeData sourceData s::Maybe [([Double],String)])
-   where sCSV (Nothing) = error "Wrong CSV File Format"
-         sCSV (Just a) = a
 
 main = do 
-  sourceData <- readFile "source2.txt" `catch` handlerForFileRoutine "source1.txt"
-  let 
-    x = getData sourceData ","
-    classesFreq = getClassesFreq x
-    featuresFreq = getFeaturesFreq x
-    in printMatrix $ classify (map (fst) x) classesFreq featuresFreq
+  x <- getMaybeData "source1.txt"
+  let
+    objs = unpackMaybeData $ sequence x
+    classesFreq = getClassesFreq objs
+    featuresFreq = getFeaturesFreq objs
+    in printMatrix $ classify (map (fst) objs) classesFreq featuresFreq
+
 
 
     
